@@ -1,7 +1,19 @@
 <!-- home -->
 <template>
   <div class="list-container">
-    <div class="item" v-for="(item,index) in list" :key="index">{{item}}</div>
+    <div
+      class="item"
+      :class="{ selected: result.includes(item) }"
+      v-for="(item, index) in list"
+      :key="index"
+      :data-index="index"
+      :data-item="item"
+      @touchstart="gtouchstart(item, index, $event)"
+      @touchend="gtouchend(item, index, $event)"
+      @touchmove="fnMove(item, index, $event)"
+    >
+      {{ item }}
+    </div>
   </div>
 </template>
 
@@ -9,7 +21,14 @@
 export default {
   data() {
     return {
-      list: []
+      list: [], //列表数据
+      touchesPageX: 0, //手指移动的初始位置
+      touchesPageY: 0, //手指移动的初始位置
+      startSelectIndex: null, //滑动选择起始项位置
+      curSelectResult: [], //记录滑动选择之前已选中的数据
+      result: [], //当前滑选+滑选前的数据
+      isScrollSelect: false, //是否在执行滑选的动作
+      startY: 0 //获取手指初始坐标
     }
   },
 
@@ -18,9 +37,128 @@ export default {
     for (let i = 0; i < 60; i++) {
       this.list.push(i)
     }
+    this.fnMove = this.throttle(this.goTouchMove, 30) //节流
   },
 
-  methods: {}
+  methods: {
+    throttle(fn, interval = 500, option) {
+      let last = 0
+      let timer = null
+      if (!option) option = {}
+
+      let trailing = option.trailing || false
+      let result = option.result || null
+      let handleFn = function () {
+        // this和argument
+        let _this = this
+        let _arguments = arguments
+        let now = new Date().getTime()
+
+        if (now - last > interval) {
+          if (timer) {
+            clearTimeout(timer)
+            timer = null
+          }
+          callFn(_this, _arguments)
+
+          last = now
+        } else if (timer == null && trailing) {
+          // 只是最后一次
+
+          timer = setTimeout(function () {
+            timer = null
+            callFn(_this, _arguments)
+          }, interval)
+        }
+      }
+
+      handleFn.cancel = function () {
+        clearTimeout(timer)
+        timer = null
+      }
+
+      function callFn(context, argument) {
+        let res = fn.apply(context, argument)
+
+        if (!result) {
+          return res
+        }
+      }
+      return handleFn
+    },
+    // 自定义长按
+    gtouchstart(item, index, event) {
+      this.touchesPageX = event.touches[0].pageX
+      this.touchesPageY = event.touches[0].pageY
+      this.startSelectIndex = index
+      this.startSelectItem = item
+      this.isStarSelect = this.curSelectResult.includes(item) //第一个落点位置的选择状态
+    },
+    // 页面移动距离大于5时不出现长按效果
+    goTouchMove(item, index, event) {
+      let touchesPageX = event.touches[0].pageX
+      let touchesPageY = event.touches[0].pageY
+      let XDis = Math.abs(touchesPageX - this.touchesPageX)
+      let YDis = Math.abs(touchesPageY - this.touchesPageY)
+      if (XDis > 5 || YDis > 5) {
+          let flag = false //当前是否执行滑选动作
+          if (this.isScrollSelect) {
+            flag = true
+          } else {
+            if (YDis === 0) {
+              //单个X轴滑动选择,Y轴未移动
+              flag = XDis >= 5
+            } else {
+              flag = XDis / YDis >= 1
+            }
+          }
+          if (!flag) {
+            return false
+          }
+          this.isScrollSelect = true
+          // 滑动选择
+          let curTarget = document.elementFromPoint(touchesPageX, touchesPageY) //获取当前坐标点位置底部层级最高的元素
+          let curItem = curTarget && curTarget.getAttribute('data-item') //自定义属性，根据具体业务配置，需要唯一
+          if (curItem && flag) {
+            let curIndex = curTarget.getAttribute('data-index') - 0
+            let isDownSelect = curIndex - this.startSelectIndex >= 0 // 是否是向下滑选
+            if (curIndex === this.startSelectIndex) {
+              // 滑选过程中回到起点
+              if (!this.isStarSelect) {
+                //X轴有移动的情况才算滑选选中当前
+                this.result.push(curItem)
+              } else {
+                this.result = [...this.curSelectResult] // 滑选回到起点
+              }
+            }
+            //滑选需要勾选
+            let start = isDownSelect ? this.startSelectIndex : curIndex
+            let end = isDownSelect ? curIndex + 1 : this.startSelectIndex
+            let selectArr = this.list.slice(start, end)
+            // 走勾选逻辑
+            if (!this.isStarSelect) {
+              this.result = this.curSelectResult.concat(selectArr.map(selectItem => selectItem.path))
+              this.result.push(this.startSelectItem.path)
+            } else {
+              // 走取消勾选逻辑
+              selectArr.forEach(item => {
+                let findIndex = this.result.findIndex(resultItem => resultItem === item)
+                if (findIndex !== -1) {
+                  this.result.splice(findIndex, 1)
+                }
+              })
+              this.result = this.result.filter(item => item !== this.startSelectItem.path)
+            }
+            this.result = [...new Set(this.result)]
+            console.log( this.result,' this.result')
+          }
+      }
+    },
+    gtouchend(item, index, event) {
+      this.isScrollSelect = false
+      return false
+    }
+  }
 }
 </script>
 <style lang="scss" scoped>
@@ -34,6 +172,9 @@ export default {
     width: 80px;
     height: 80px;
     border: 1px solid green;
+    &.selected {
+      border-color: red;
+    }
   }
 }
 </style>
