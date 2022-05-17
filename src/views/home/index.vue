@@ -36,7 +36,7 @@ export default {
 
   computed: {},
   mounted() {
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 600; i++) {
       this.list.push(i)
     }
     this.fnMove = this.throttle(this.goTouchMove, 30) //节流
@@ -178,12 +178,14 @@ export default {
       position: absolute;
       width: 80px;
       height: 80px;
+      line-height: 80px;
       z-index: 1;
-      background: #ccc;
+      background: #eee;
+      text-align: center;
     }
     &.selected {
       .item-container {
-       background: green;
+       background: rgb(35, 201, 35);
       }
     }
   }
