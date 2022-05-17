@@ -3,16 +3,11 @@
   <div>
     <scroll-lock :lock="isScrollSelect" :bodyLock="true">
       <div class="list-container">
-        <div
-          class="item"
-          :class="{ selected: result.includes(item) }"
-          v-for="(item, index) in list"
-          :key="index"
-          @touchstart="gtouchstart(item, index, $event)"
-          @touchend="gtouchend(item, index, $event)"
-          @touchmove="fnMove($event)"
-        >
-          <div class="item-container" :data-index="index" :data-item="item">{{ item }}</div>
+        <div class="item" :class="{ selected: result.includes(item) }" v-for="(item, index) in list" :key="index"
+          @touchstart="gtouchstart(item, index, $event)" @touchend="gtouchend(item, index, $event)"
+          @touchmove="fnMove($event)">
+          <div class="item-container" :data-index="index" :data-item="item" @click.stop="selectItem(item)">{{ item }}
+          </div>
         </div>
       </div>
     </scroll-lock>
@@ -55,7 +50,6 @@ export default {
         let _this = this
         let _arguments = arguments
         let now = new Date().getTime()
-
         if (now - last > interval) {
           if (timer) {
             clearTimeout(timer)
@@ -81,12 +75,20 @@ export default {
 
       function callFn(context, argument) {
         let res = fn.apply(context, argument)
-
         if (!result) {
           return res
         }
       }
       return handleFn
+    },
+    // 单个选择&取消选择
+    selectItem(item) {
+      if (this.result.includes(item)) {
+        let findIndex = this.result.findIndex(resultItem => resultItem === item)
+        this.result.splice(findIndex, 1)
+      } else {
+        this.result.push(item)
+      }
     },
     // 记录手指起点信息
     gtouchstart(item, index, event) {
@@ -120,7 +122,7 @@ export default {
         }
         this.isScrollSelect = true
         // 滑动选择
-        let curTarget = document.elementFromPoint(touchesPageX- window.pageXOffset, touchesPageY- window.pageYOffset) //获取当前坐标点位置底部层级最高的元素
+        let curTarget = document.elementFromPoint(touchesPageX - window.pageXOffset, touchesPageY - window.pageYOffset) //获取当前坐标点位置底部层级最高的元素
         let curItem = curTarget && curTarget.getAttribute('data-item') //自定义属性，根据具体业务配置，需要唯一
         if (curItem && flag) {
           let curIndex = curTarget.getAttribute('data-index') - 0
@@ -185,7 +187,7 @@ export default {
     }
     &.selected {
       .item-container {
-       background: rgb(35, 201, 35);
+        background: rgb(35, 201, 35);
       }
     }
   }
