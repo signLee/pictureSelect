@@ -120,42 +120,46 @@ export default {
         if (!flag) {
           return false
         }
-        this.isScrollSelect = true
-        // 滑动选择
-        let curTarget = document.elementFromPoint(touchesPageX - window.pageXOffset, touchesPageY - window.pageYOffset) //获取当前坐标点位置底部层级最高的元素
-        let curItem = curTarget && curTarget.getAttribute('data-item') //自定义属性，根据具体业务配置，需要唯一
-        if (curItem && flag) {
-          let curIndex = curTarget.getAttribute('data-index') - 0
-          let isDownSelect = curIndex - this.startSelectIndex >= 0 // 是否是向下滑选
-          if (curIndex === this.startSelectIndex) {
-            // 滑选过程中回到起点
-            if (!this.isStarSelect) {
-              //X轴有移动的情况才算滑选选中当前
-              this.result.push(curItem)
-            } else {
-              this.result = [...this.curSelectResult] // 滑选回到起点
-            }
-          }
-          //滑选需要勾选
-          let start = isDownSelect ? this.startSelectIndex : curIndex
-          let end = isDownSelect ? curIndex + 1 : this.startSelectIndex
-          let selectArr = this.list.slice(start, end)
-          // 走勾选逻辑
+        this.mutiSelect(touchesPageX,touchesPageY,flag)
+      }
+    },
+    // 多选勾选逻辑
+    mutiSelect(touchesPageX,touchesPageY,flag) {
+      this.isScrollSelect = true
+      // 滑动选择
+      let curTarget = document.elementFromPoint(touchesPageX - window.pageXOffset, touchesPageY - window.pageYOffset) //获取当前坐标点位置底部层级最高的元素
+      let curItem = curTarget && curTarget.getAttribute('data-item') //自定义属性，根据具体业务配置，需要唯一
+      if (curItem && flag) {
+        let curIndex = curTarget.getAttribute('data-index') - 0
+        let isDownSelect = curIndex - this.startSelectIndex >= 0 // 是否是向下滑选
+        if (curIndex === this.startSelectIndex) {
+          // 滑选过程中回到起点
           if (!this.isStarSelect) {
-            this.result = this.curSelectResult.concat(selectArr.map(selectItem => selectItem))
-            this.result.push(this.startSelectItem)
+            //X轴有移动的情况才算滑选选中当前
+            this.result.push(curItem)
           } else {
-            // 走取消勾选逻辑
-            selectArr.forEach(item => {
-              let findIndex = this.result.findIndex(resultItem => resultItem === item)
-              if (findIndex !== -1) {
-                this.result.splice(findIndex, 1)
-              }
-            })
-            this.result = this.result.filter(item => item !== this.startSelectItem)
+            this.result = [...this.curSelectResult] // 滑选回到起点
           }
-          this.result = [...new Set(this.result)]
         }
+        //滑选需要勾选
+        let start = isDownSelect ? this.startSelectIndex : curIndex
+        let end = isDownSelect ? curIndex + 1 : this.startSelectIndex
+        let selectArr = this.list.slice(start, end)
+        // 走勾选逻辑
+        if (!this.isStarSelect) {
+          this.result = this.curSelectResult.concat(selectArr.map(selectItem => selectItem))
+          this.result.push(this.startSelectItem)
+        } else {
+          // 走取消勾选逻辑
+          selectArr.forEach(item => {
+            let findIndex = this.result.findIndex(resultItem => resultItem === item)
+            if (findIndex !== -1) {
+              this.result.splice(findIndex, 1)
+            }
+          })
+          this.result = this.result.filter(item => item !== this.startSelectItem)
+        }
+        this.result = [...new Set(this.result)]
       }
     },
     gtouchend(item, index, event) {
