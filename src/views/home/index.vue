@@ -186,6 +186,7 @@ export default {
     width: 80px;
     height: 80px;
     position: relative;
+     touch-action: none;
     .item-container {
       position: absolute;
       width: 80px;
