@@ -1,19 +1,17 @@
 <!-- home -->
 <template>
   <div>
-    <scroll-lock :lock="isScrollSelect" :bodyLock="true">
-      <div class="btn" @click="selectAll">
-        <button>全选</button>
-      </div>
-      <div class="list-container">
-        <div class="item" :class="{ selected: result.includes(item) }" v-for="(item, index) in list" :key="index"
-          @touchstart="gtouchstart(item, index, $event)" @touchend="gtouchend(item, index, $event)"
-          @touchmove="fnMove($event)">
-          <div class="item-container" :data-index="index" :data-item="item" @click.stop="selectItem(item)">{{ item }}
-          </div>
+    <div class="btn" @click="selectAll">
+      <button>全选</button>
+    </div>
+    <div class="list-container" v-scroll-lock="isScrollSelect">
+      <div class="item" :class="{ selected: result.includes(item) }" v-for="(item, index) in list" :key="index"
+        @touchstart="gtouchstart(item, index, $event)" @touchend="gtouchend(item, index, $event)"
+        @touchmove="fnMove($event)">
+        <div class="item-container" :data-index="index" :data-item="item" @click.stop="selectItem(item)">{{ item }}
         </div>
       </div>
-    </scroll-lock>
+    </div>
   </div>
 </template>
 
@@ -186,7 +184,6 @@ export default {
     width: 80px;
     height: 80px;
     position: relative;
-     touch-action: none;
     .item-container {
       position: absolute;
       width: 80px;

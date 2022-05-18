@@ -7,8 +7,12 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import VueScrollLock from 'vue-scroll-lock'
-Vue.use(VueScrollLock)
+import VScrollLock from 'v-scroll-lock'
+Vue.use(VScrollLock, {
+  bodyScrollOptions: {
+    reserveScrollBarGap: true,
+  },
+})
 // 设置 js中可以访问 $cdn
 import { $cdn } from '@/config'
 Vue.prototype.$cdn = $cdn
