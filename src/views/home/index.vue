@@ -85,7 +85,7 @@ export default {
       return handleFn
     },
     selectAll() {
-      this.result = this.result.length === this.list.length?[]:this.list.map(item=>item)
+      this.result = this.result.length === this.list.length ? [] : this.list.map(item => item)
     },
     // 单个选择&取消选择
     selectItem(item) {
