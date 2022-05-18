@@ -120,16 +120,16 @@ export default {
         if (!flag) {
           return false
         }
-        this.mutiSelect(touchesPageX,touchesPageY,flag)
+        this.mutiSelect(touchesPageX, touchesPageY)
       }
     },
     // 多选勾选逻辑
-    mutiSelect(touchesPageX,touchesPageY,flag) {
+    mutiSelect(touchesPageX, touchesPageY) {
       this.isScrollSelect = true
       // 滑动选择
       let curTarget = document.elementFromPoint(touchesPageX - window.pageXOffset, touchesPageY - window.pageYOffset) //获取当前坐标点位置底部层级最高的元素
       let curItem = curTarget && curTarget.getAttribute('data-item') //自定义属性，根据具体业务配置，需要唯一
-      if (curItem && flag) {
+      if (curItem) {
         let curIndex = curTarget.getAttribute('data-index') - 0
         let isDownSelect = curIndex - this.startSelectIndex >= 0 // 是否是向下滑选
         if (curIndex === this.startSelectIndex) {
@@ -162,7 +162,7 @@ export default {
         this.result = [...new Set(this.result)]
       }
     },
-    gtouchend(item, index, event) {
+    gtouchend() {
       this.isScrollSelect = false
       return false
     }
