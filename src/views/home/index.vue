@@ -2,6 +2,9 @@
 <template>
   <div>
     <scroll-lock :lock="isScrollSelect" :bodyLock="true">
+      <div class="btn" @click="selectAll">
+        <button>全选</button>
+      </div>
       <div class="list-container">
         <div class="item" :class="{ selected: result.includes(item) }" v-for="(item, index) in list" :key="index"
           @touchstart="gtouchstart(item, index, $event)" @touchend="gtouchend(item, index, $event)"
@@ -80,6 +83,9 @@ export default {
         }
       }
       return handleFn
+    },
+    selectAll() {
+      this.result = this.result.length === this.list.length?[]:this.list.map(item=>item)
     },
     // 单个选择&取消选择
     selectItem(item) {
