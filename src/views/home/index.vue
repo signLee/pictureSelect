@@ -24,12 +24,12 @@ export default {
       startTouchesPageY: 0, //手指移动的初始位置
       moveTouchesPageX: 0, //手指移动中的X轴位置
       moveTouchesPageY: 0, //手指移动中的Y轴位置
-      startSelectIndex: null, //滑动选择起始项位置
+      startSelectIndex: null, //滑动选择起始项index
       curSelectResult: [], //记录滑动选择之前已选中的数据
-      result: [], //当前滑选+滑选后的数据
+      result: [], //当前已选中+滑选后的数据
       isScrollSelect: false, //是否在执行滑选的动作
-      startY: 0,//获取手指初始坐标
       timer: false,//自动滚动定时器
+      minHeight: 80,// 定义滑选过程中执行页面滚动的触发阈值
       oldContainerScrollTop: null//用于比较上一次的滚动记录
     }
   },
@@ -87,6 +87,7 @@ export default {
       }
       return handleFn
     },
+    // 全选&全部取消
     selectAll() {
       this.result = this.result.length === this.list.length ? [] : this.list.map(item => item)
     },
@@ -111,6 +112,7 @@ export default {
     },
     // 页面移动距离大于5时不出现长按效果
     goTouchMove(event) {
+      this.oldContainerScrollTop&&clearTimeout(this.timer)
       this.moveTouchesPageX = event.touches[0].pageX
       this.moveTouchesPageY = event.touches[0].pageY
       let XDis = Math.abs(this.moveTouchesPageX - this.startTouchesPageX)
@@ -130,10 +132,7 @@ export default {
         if (!flag) {
           return false
         }
-        clearTimeout(this.timer)
         this.mutiSelect()
-      } else {
-        clearTimeout(this.timer)
       }
     },
     // 多选勾选逻辑
@@ -173,18 +172,7 @@ export default {
           this.result = this.result.filter(item => item !== this.startSelectItem)
         }
         this.result = [...new Set(this.result)]
-        let offsetTopHieght = this.moveTouchesPageY - window.pageYOffset
-        let isScrollTop = offsetTopHieght < 80
-        let isScrollBottom = this.innerHeight - offsetTopHieght < 80
-        // 由于指定的默认是往下滑选，如果当前项和滑动项是同一个的情况需要处理
-        if (!isDownSelect && isScrollTop || isScrollBottom && isDownSelect && curIndex !== this.startSelectIndex) {
-          this.isScrollSelect = false
-          let time = isDownSelect ? ((this.innerHeight - offsetTopHieght) / 80 * 100) | 0 : (offsetTopHieght / 80 * 100) | 0
-          time = time < 5 ? 5 : time
-          this.timer = setTimeout(() => {
-            this.scrollContainer(isScrollBottom, this.moveTouchesPageX, this.moveTouchesPageY - window.pageYOffset)
-          }, time)
-        }
+        this.scroll(isDownSelect, curIndex)
       }
     },
     gtouchend() {
@@ -192,9 +180,24 @@ export default {
       this.isScrollSelect = false
       return false
     },
+    // 滑动过程中滑动到顶部或者底部需要滚动页面进行选择
+    scroll(isDownSelect, curIndex) {
+      let offsetTopHieght = this.moveTouchesPageY - window.pageYOffset //当前移动过程中手指落点位置距离窗口顶部距离
+      let isScrollTop = offsetTopHieght < this.minHeight // 手指是否已经滑动到顶部
+      let isScrollBottom = this.innerHeight - offsetTopHieght < this.minHeight // 手指是否已经滑动到底部
+      // 由于指定的默认是往下滑选，如果当前项和滑动项是同一个的情况需要处理
+      if (!isDownSelect && isScrollTop || isScrollBottom && isDownSelect && curIndex !== this.startSelectIndex) {
+        let time = isDownSelect ? ((this.innerHeight - offsetTopHieght) / this.minHeight * 100) | 0 : (offsetTopHieght / this.minHeight * 100) | 0//指定本次滚动执行时间
+        clearTimeout(this.timer)
+        this.timer = setTimeout(() => {
+          this.scrollContainer(isScrollBottom, this.moveTouchesPageX, this.moveTouchesPageY - window.pageYOffset)
+        }, time)
+      }
+    },
+    // 容器滚动逻辑
     scrollContainer(isScrollBottom) {
       this.$refs.container.scrollTop = isScrollBottom ? this.$refs.container.scrollTop + 50 : this.$refs.container.scrollTop - 50
-      if (this.oldContainerScrollTop !== this.$refs.container.scrollTop) {
+      if (this.oldContainerScrollTop !== this.$refs.container.scrollTop) {// 如果有2次的滚动距离一致，结束滚动
         this.oldContainerScrollTop = this.$refs.container.scrollTop
         this.mutiSelect()
       }
