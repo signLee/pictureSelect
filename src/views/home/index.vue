@@ -179,7 +179,7 @@ export default {
         // 由于指定的默认是往下滑选，如果当前项和滑动项是同一个的情况需要处理
         if (!isDownSelect && isScrollTop || isScrollBottom && isDownSelect && curIndex !== this.startSelectIndex) {
           this.isScrollSelect = false
-          let time = isDownSelect ? ((this.innerHeight - offsetTopHieght) / 80 * 1000) | 0 : (offsetTopHieght / 80 * 1000) | 0
+          let time = isDownSelect ? ((this.innerHeight - offsetTopHieght) / 80 * 100) | 0 : (offsetTopHieght / 80 * 100) | 0
           time = time < 10 ? 10 : time
           this.timer = setTimeout(() => {
             this.scrollContainer(isScrollBottom, this.moveTouchesPageX, this.moveTouchesPageY - window.pageYOffset)
