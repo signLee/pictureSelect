@@ -190,7 +190,7 @@ export default {
         let time = isDownSelect ? ((this.innerHeight - offsetTopHieght) / this.minHeight * 100) | 0 : (offsetTopHieght / this.minHeight * 100) | 0//指定本次滚动执行时间
         clearTimeout(this.timer)
         this.timer = setTimeout(() => {
-          this.scrollContainer(isScrollBottom, this.moveTouchesPageX, this.moveTouchesPageY - window.pageYOffset)
+          this.scrollContainer(isScrollBottom)
         }, time)
       }
     },
