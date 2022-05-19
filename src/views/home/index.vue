@@ -1,6 +1,6 @@
 <!-- home -->
 <template>
-  <div>
+  <div class="container" ref="container">
     <div class="btn" @click="selectAll">
       <button>全选</button>
     </div>
@@ -26,7 +26,9 @@ export default {
       curSelectResult: [], //记录滑动选择之前已选中的数据
       result: [], //当前滑选+滑选后的数据
       isScrollSelect: false, //是否在执行滑选的动作
-      startY: 0 //获取手指初始坐标
+      startY: 0,//获取手指初始坐标
+      timer: false,//自动滚动定时器
+      oldContainerScrollTop: null//用于比较上一次的滚动记录
     }
   },
 
@@ -36,6 +38,7 @@ export default {
       this.list.push(i)
     }
     this.fnMove = this.throttle(this.goTouchMove, 30) //节流
+    this.innerHeight = window.innerHeight;//可视区高度
   },
 
   methods: {
@@ -96,6 +99,7 @@ export default {
     },
     // 记录手指起点信息
     gtouchstart(item, index, event) {
+      this.oldContainerScrollTop = null
       this.touchesPageX = event.touches[0].pageX
       this.touchesPageY = event.touches[0].pageY
       this.startSelectIndex = index
@@ -125,6 +129,8 @@ export default {
           return false
         }
         this.mutiSelect(touchesPageX, touchesPageY)
+      } else {
+        clearTimeout(this.timer)
       }
     },
     // 多选勾选逻辑
@@ -164,38 +170,62 @@ export default {
           this.result = this.result.filter(item => item !== this.startSelectItem)
         }
         this.result = [...new Set(this.result)]
+        let offsetTopHieght = touchesPageY - window.pageYOffset
+        let isScrollTop = offsetTopHieght < 80
+        let isScrollBottom = this.innerHeight - offsetTopHieght < 80
+        // 由于指定的默认是往下滑选，如果当前项和滑动项是同一个的情况需要处理
+        if (!isDownSelect && isScrollTop || isScrollBottom && isDownSelect && curIndex !== this.startSelectIndex) {
+          this.isScrollSelect = false
+          clearTimeout(this.timer)
+          this.timer = setTimeout(() => {
+            this.scrollContainer(isScrollBottom, touchesPageX, touchesPageY - window.pageYOffset)
+          }, 100)
+        }
       }
     },
     gtouchend() {
+      clearTimeout(this.timer)
       this.isScrollSelect = false
       return false
+    },
+    scrollContainer(isScrollBottom, touchesPageX, oldPageY) {
+      this.$refs.container.scrollTop = isScrollBottom ? this.$refs.container.scrollTop + 50 : this.$refs.container.scrollTop - 50
+      if (this.oldContainerScrollTop !== this.$refs.container.scrollTop) {
+        this.oldContainerScrollTop = this.$refs.container.scrollTop
+        this.mutiSelect(touchesPageX, oldPageY)
+      }
     }
   }
 }
 </script>
 <style lang="scss" scoped>
-.list-container {
-  background: #fff;
-  padding: 12px;
-  display: flex;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  .item {
-    width: 80px;
-    height: 80px;
-    position: relative;
-    .item-container {
-      position: absolute;
+.container {
+  height: 100vh;
+  overflow-y: scroll;
+  .list-container {
+    overflow: hidden;
+    background: #fff;
+    padding: 12px;
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    .item {
       width: 80px;
       height: 80px;
-      line-height: 80px;
-      z-index: 1;
-      background: #eee;
-      text-align: center;
-    }
-    &.selected {
+      position: relative;
       .item-container {
-        background: rgb(35, 201, 35);
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        line-height: 80px;
+        z-index: 1;
+        background: #eee;
+        text-align: center;
+      }
+      &.selected {
+        .item-container {
+          background: rgb(35, 201, 35);
+        }
       }
     }
   }
