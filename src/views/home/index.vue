@@ -180,7 +180,7 @@ export default {
         if (!isDownSelect && isScrollTop || isScrollBottom && isDownSelect && curIndex !== this.startSelectIndex) {
           this.isScrollSelect = false
           let time = isDownSelect ? ((this.innerHeight - offsetTopHieght) / 80 * 100) | 0 : (offsetTopHieght / 80 * 100) | 0
-          time = time < 10 ? 10 : time
+          time = time < 5 ? 5 : time
           this.timer = setTimeout(() => {
             this.scrollContainer(isScrollBottom, this.moveTouchesPageX, this.moveTouchesPageY - window.pageYOffset)
           }, time)
