@@ -20,8 +20,10 @@ export default {
   data() {
     return {
       list: [], //列表数据
-      touchesPageX: 0, //手指移动的初始位置
-      touchesPageY: 0, //手指移动的初始位置
+      startTouchesPageX: 0, //手指移动的初始位置
+      startTouchesPageY: 0, //手指移动的初始位置
+      moveTouchesPageX: 0, //手指移动中的X轴位置
+      moveTouchesPageY: 0, //手指移动中的Y轴位置
       startSelectIndex: null, //滑动选择起始项位置
       curSelectResult: [], //记录滑动选择之前已选中的数据
       result: [], //当前滑选+滑选后的数据
@@ -100,8 +102,8 @@ export default {
     // 记录手指起点信息
     gtouchstart(item, index, event) {
       this.oldContainerScrollTop = null
-      this.touchesPageX = event.touches[0].pageX
-      this.touchesPageY = event.touches[0].pageY
+      this.startTouchesPageX = event.touches[0].pageX
+      this.startTouchesPageY = event.touches[0].pageY
       this.startSelectIndex = index
       this.startSelectItem = item
       this.curSelectResult = this.result.slice(0)
@@ -109,10 +111,10 @@ export default {
     },
     // 页面移动距离大于5时不出现长按效果
     goTouchMove(event) {
-      let touchesPageX = event.touches[0].pageX
-      let touchesPageY = event.touches[0].pageY
-      let XDis = Math.abs(touchesPageX - this.touchesPageX)
-      let YDis = Math.abs(touchesPageY - this.touchesPageY)
+      this.moveTouchesPageX = event.touches[0].pageX
+      this.moveTouchesPageY = event.touches[0].pageY
+      let XDis = Math.abs(this.moveTouchesPageX - this.startTouchesPageX)
+      let YDis = Math.abs(this.moveTouchesPageY - this.startTouchesPageY)
       if (XDis > 5 || YDis > 5) {
         let flag = false //当前是否执行滑选动作
         if (this.isScrollSelect) {
@@ -128,16 +130,17 @@ export default {
         if (!flag) {
           return false
         }
-        this.mutiSelect(touchesPageX, touchesPageY)
+        clearTimeout(this.timer)
+        this.mutiSelect()
       } else {
         clearTimeout(this.timer)
       }
     },
     // 多选勾选逻辑
-    mutiSelect(touchesPageX, touchesPageY) {
+    mutiSelect() {
       this.isScrollSelect = true
       // 滑动选择
-      let curTarget = document.elementFromPoint(touchesPageX - window.pageXOffset, touchesPageY - window.pageYOffset) //获取当前坐标点位置底部层级最高的元素
+      let curTarget = document.elementFromPoint(this.moveTouchesPageX - window.pageXOffset, this.moveTouchesPageY - window.pageYOffset) //获取当前坐标点位置底部层级最高的元素
       let curItem = curTarget && curTarget.getAttribute('data-item') //自定义属性，根据具体业务配置，需要唯一
       if (curItem) {
         let curIndex = curTarget.getAttribute('data-index') - 0
@@ -170,16 +173,17 @@ export default {
           this.result = this.result.filter(item => item !== this.startSelectItem)
         }
         this.result = [...new Set(this.result)]
-        let offsetTopHieght = touchesPageY - window.pageYOffset
+        let offsetTopHieght = this.moveTouchesPageY - window.pageYOffset
         let isScrollTop = offsetTopHieght < 80
         let isScrollBottom = this.innerHeight - offsetTopHieght < 80
         // 由于指定的默认是往下滑选，如果当前项和滑动项是同一个的情况需要处理
         if (!isDownSelect && isScrollTop || isScrollBottom && isDownSelect && curIndex !== this.startSelectIndex) {
           this.isScrollSelect = false
-          clearTimeout(this.timer)
+          let time = isDownSelect ? ((this.innerHeight - offsetTopHieght) / 80 * 1000) | 0 : (offsetTopHieght / 80 * 1000) | 0
+          time = time < 10 ? 10 : time
           this.timer = setTimeout(() => {
-            this.scrollContainer(isScrollBottom, touchesPageX, touchesPageY - window.pageYOffset)
-          }, 100)
+            this.scrollContainer(isScrollBottom, this.moveTouchesPageX, this.moveTouchesPageY - window.pageYOffset)
+          }, time)
         }
       }
     },
@@ -188,11 +192,11 @@ export default {
       this.isScrollSelect = false
       return false
     },
-    scrollContainer(isScrollBottom, touchesPageX, oldPageY) {
+    scrollContainer(isScrollBottom) {
       this.$refs.container.scrollTop = isScrollBottom ? this.$refs.container.scrollTop + 50 : this.$refs.container.scrollTop - 50
       if (this.oldContainerScrollTop !== this.$refs.container.scrollTop) {
         this.oldContainerScrollTop = this.$refs.container.scrollTop
-        this.mutiSelect(touchesPageX, oldPageY)
+        this.mutiSelect()
       }
     }
   }
